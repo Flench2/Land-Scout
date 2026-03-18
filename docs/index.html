@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Land Scout v68 · 2026-03-18 22:17</title>
+<title>Land Scout v69 · 2026-03-18 23:03</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -364,7 +364,9 @@ tbody tr{animation:fadeIn .2s ease both}
     </button>
     <span id="elevStatus" style="font-size:11px;color:var(--accent);margin-left:6px"></span>
     <span id="copyMsg" style="font-size:11px;color:var(--accent);margin-left:8px;opacity:0;transition:opacity .5s"></span>
-    <div class="logo">LAND SCOUT <small>v68 · 2026-03-18 22:17</small><span id="capNote" style="font-size:9px;color:var(--muted);margin-left:8px"></span></div>
+    <button class="copy-btn" onclick="exportRatings()" title="Download your saved ratings as a backup file">⬇ Export Ratings</button>
+    <label class="copy-btn" style="cursor:pointer" title="Restore ratings from a backup file">⬆ Import Ratings<input type="file" accept=".json" onchange="importRatings(event)" style="display:none"></label>
+    <div class="logo">LAND SCOUT <small>v69 · 2026-03-18 23:03</small><span id="capNote" style="font-size:9px;color:var(--muted);margin-left:8px"></span></div>
     <div class="stats-strip">
       <div class="stat-item"><span class="stat-n">2960</span><span class="stat-l">Total</span></div>
       <div class="stat-item"><span class="stat-n" id="visCount">2960</span><span class="stat-l">Shown</span></div>
@@ -1133,6 +1135,50 @@ function resetFilters() {
   var capNote = document.getElementById('capNote');
   if (capNote) capNote.textContent = '(top 500 shown — re-run with filters to explore more)';
   applyFilters();
+}
+
+function exportRatings() {
+  const data = {
+    saved:   JSON.parse(localStorage.getItem('land_scout_saved')  || '{}'),
+    statuses: JSON.parse(localStorage.getItem('land_scout_status') || '{}'),
+    exported: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'land_scout_ratings_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importRatings(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.saved) {
+        const existing = JSON.parse(localStorage.getItem('land_scout_saved') || '{}');
+        const merged = Object.assign({}, data.saved, existing); // existing wins on conflict
+        localStorage.setItem('land_scout_saved', JSON.stringify(merged));
+        Object.assign(SAVED, merged);
+      }
+      if (data.statuses) {
+        const existing = JSON.parse(localStorage.getItem('land_scout_status') || '{}');
+        const merged = Object.assign({}, data.statuses, existing);
+        localStorage.setItem('land_scout_status', JSON.stringify(merged));
+        Object.assign(STATUSES, merged);
+      }
+      alert('Ratings imported successfully! ' + Object.keys(data.statuses||{}).length + ' statuses loaded.');
+      applyFilters();
+      renderSavedPanel();
+    } catch(err) {
+      alert('Import failed: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = ''; // reset so same file can be re-imported
 }
 
 init();
