@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Land Scout v70 · 2026-03-19 14:38</title>
+<title>Land Scout v71 · 2026-03-19 14:54</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -201,6 +201,20 @@ td.num{text-align:right;font-family:var(--font-mono);white-space:nowrap}
 .sig-cell{min-width:120px;font-size:11px;line-height:1.6}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 tbody tr{animation:fadeIn .2s ease both}
+
+/* ─ Mobile ─ */
+@media (max-width: 768px) {
+  .app { flex-direction: column; height: auto; overflow: auto; }
+  .sidebar { width: 100%; min-width: unset; border-right: none; border-bottom: 1px solid var(--border); max-height: 50vh; }
+  .main-area { flex: 1; overflow: auto; }
+  .topbar { flex-wrap: wrap; gap: 8px; padding: 8px 12px; }
+  .logo { display: none; }
+  .stats-strip { flex-wrap: wrap; gap: 6px; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 900px; font-size: 11px; }
+  th, td { padding: 5px 6px; }
+  .copy-btn { font-size: 10px; padding: 4px 8px; }
+}
 </style>
 </head>
 <body>
@@ -366,7 +380,7 @@ tbody tr{animation:fadeIn .2s ease both}
     <span id="copyMsg" style="font-size:11px;color:var(--accent);margin-left:8px;opacity:0;transition:opacity .5s"></span>
     <button class="copy-btn" onclick="exportRatings()" title="Download your saved ratings as a backup file">⬇ Export Ratings</button>
     <label class="copy-btn" style="cursor:pointer" title="Restore ratings from a backup file">⬆ Import Ratings<input type="file" accept=".json" onchange="importRatings(event)" style="display:none"></label>
-    <div class="logo">LAND SCOUT <small>v70 · 2026-03-19 14:38</small><span id="capNote" style="font-size:9px;color:var(--muted);margin-left:8px"></span></div>
+    <div class="logo">LAND SCOUT <small>v71 · 2026-03-19 14:54</small><span id="capNote" style="font-size:9px;color:var(--muted);margin-left:8px"></span></div>
     <div class="stats-strip">
       <div class="stat-item"><span class="stat-n">2960</span><span class="stat-l">Total</span></div>
       <div class="stat-item"><span class="stat-n" id="visCount">2960</span><span class="stat-l">Shown</span></div>
@@ -377,6 +391,10 @@ tbody tr{animation:fadeIn .2s ease both}
     </div>
   </div>
 
+  <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;flex-shrink:0;text-align:center">
+    <div style="font-family:var(--font-head);font-size:15px;font-weight:800;color:var(--fg);letter-spacing:.3px">Off Market Large Property Search for Southern Appalachian Mountains</div>
+    <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:.5px">⏱ Data Refresh Runs Overnight</div>
+  </div>
   <div class="table-wrap">
     <table id="leadsTable">
     <thead>
