@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Land Scout v74 · 2026-03-20 05:43</title>
+<title>Land Scout v75 · 2026-03-20 05:51</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -386,7 +386,7 @@ tbody tr{animation:fadeIn .2s ease both}
     <span id="copyMsg" style="font-size:11px;color:var(--accent);margin-left:8px;opacity:0;transition:opacity .5s"></span>
     <button class="copy-btn" onclick="exportRatings()" title="Download your saved ratings as a backup file">⬇ Export Ratings</button>
     <label class="copy-btn" style="cursor:pointer" title="Restore ratings from a backup file">⬆ Import Ratings<input type="file" accept=".json" onchange="importRatings(event)" style="display:none"></label>
-    <div class="logo">LAND SCOUT <small>v74 · 2026-03-20 05:43</small><span id="capNote" style="font-size:9px;color:var(--muted);margin-left:8px"></span></div>
+    <div class="logo">LAND SCOUT <small>v75 · 2026-03-20 05:51</small><span id="capNote" style="font-size:9px;color:var(--muted);margin-left:8px"></span></div>
     <div class="stats-strip">
       <div class="stat-item"><span class="stat-n">3720</span><span class="stat-l">Total</span></div>
       <div class="stat-item"><span class="stat-n" id="visCount">3720</span><span class="stat-l">Shown</span></div>
@@ -616,11 +616,40 @@ function buildCountyChecks() {
     </div>`).join('');
 }
 
+// ── Climate score helper ──────────────────────────────────────────────────
+function effectiveClimateScore(d) {
+  var cs = d.climate_score || 5;
+  var e = d.elev_min || d.elevation_ft;
+  if (e && e > 0) {
+    var bonus = Math.min(3, Math.max(0, ((e - 1000) / 1000) * 0.5));
+    cs = Math.min(10, Math.round((cs + bonus) * 10) / 10);
+  }
+  return cs;
+}
+
+function reapplyHighlights() {
+  var trs = document.querySelectorAll('#tbody tr');
+  (VISIBLE_DATA || []).forEach(function(d, i) {
+    if (!trs[i]) return;
+    var cs = effectiveClimateScore(d);
+    var st = STATUSES[d.parcel_id] || '';
+    if (st === 'great' && cs >= 9) {
+      trs[i].style.outline = '2px solid #f59e0b';
+      trs[i].style.outlineOffset = '-1px';
+      trs[i].style.boxShadow = '0 0 10px rgba(245,158,11,0.35)';
+    } else {
+      trs[i].style.outline = '';
+      trs[i].style.boxShadow = '';
+    }
+  });
+}
+
 // ── Filter engine ──────────────────────────────────────────────────
 function applyFilters() {
   const minAcres   = +document.getElementById('minAcres').value;
   const maxVpa     = +document.getElementById('maxVpa').value;
-  const minHScore  = +document.getElementById('minHScore').value;
+  const minClimate = +document.getElementById('minClimate').value;
+    const minHScore  = +document.getElementById('minHScore').value;
   const minIScore  = +document.getElementById('minIScore').value;
   const minVal     = +document.getElementById('minVal').value;
   const maxVal     = +document.getElementById('maxVal').value;
@@ -646,6 +675,7 @@ function applyFilters() {
     if (!activeCounies.has(d.state + '/' + d.county)) return false;
     if (d.acres < minAcres) return false;
     if (maxVpa < 20000 && d.vpa > 0 && d.vpa > maxVpa) return false;
+    if (minClimate > 0 && effectiveClimateScore(d) < minClimate) return false;
     if (d.h_score < minHScore) return false;
     if (d.score < minIScore) return false;
     if (d.appr_value < minVal) return false;
@@ -695,6 +725,7 @@ function applyFilters() {
   renderRows(rows);
   document.getElementById('visCount').textContent = rows.length;
   document.getElementById('noResults').style.display = rows.length ? 'none' : 'flex';
+  reapplyHighlights();
 }
 
 function sortTable(key) {
