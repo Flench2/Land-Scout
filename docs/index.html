@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Land Scout v73 · 2026-03-20 05:26</title>
+<title>Land Scout v74 · 2026-03-20 05:41</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -386,7 +386,7 @@ tbody tr{animation:fadeIn .2s ease both}
     <span id="copyMsg" style="font-size:11px;color:var(--accent);margin-left:8px;opacity:0;transition:opacity .5s"></span>
     <button class="copy-btn" onclick="exportRatings()" title="Download your saved ratings as a backup file">⬇ Export Ratings</button>
     <label class="copy-btn" style="cursor:pointer" title="Restore ratings from a backup file">⬆ Import Ratings<input type="file" accept=".json" onchange="importRatings(event)" style="display:none"></label>
-    <div class="logo">LAND SCOUT <small>v73 · 2026-03-20 05:26</small><span id="capNote" style="font-size:9px;color:var(--muted);margin-left:8px"></span></div>
+    <div class="logo">LAND SCOUT <small>v74 · 2026-03-20 05:41</small><span id="capNote" style="font-size:9px;color:var(--muted);margin-left:8px"></span></div>
     <div class="stats-strip">
       <div class="stat-item"><span class="stat-n">3720</span><span class="stat-l">Total</span></div>
       <div class="stat-item"><span class="stat-n" id="visCount">3720</span><span class="stat-l">Shown</span></div>
@@ -546,6 +546,7 @@ async function fetchElevationAll() {
         d.elev_min = Math.round(ft);
         d.elev_max = Math.round(ft);
         updateRegridUrl(d);
+        reapplyHighlights();
         // Update GPS cell inline — find the GPS cell and inject elevation
         const gpsCell = tr.querySelector('.gps-cell');
         if (gpsCell) {
@@ -842,7 +843,8 @@ function renderRows(rows) {
   ${d.elev_min != null ? '<span style="color:#86efac">▼'+d.elev_min.toLocaleString()+' ft</span>' : ''}
   ${d.elev_max != null ? '<span style="color:#fde68a"> ▲'+d.elev_max.toLocaleString()+' ft</span>' : ''}<br>
   ${d.summer_high ? '<span style="color:#f97316;font-size:10px">☀'+d.summer_high+'° </span>' : ''}
-  ${d.winter_low != null ? '<span style="color:#93c5fd;font-size:10px">❄'+d.winter_low+'°</span>' : ''}
+  ${d.winter_low != null ? '<span style="color:#93c5fd;font-size:10px">❄'+d.winter_low+'°</span>' : ''}<br>
+  <span style="color:#4ade80;font-size:10px;font-weight:600">🌡 Climate ${effectiveClimateScore(d)}/10</span>
 </td>
 <td style="font-size:9px;line-height:1.5;white-space:nowrap;min-width:80px">
   ${(d.towns&&d.towns.small)
@@ -918,7 +920,12 @@ function renderSavedList() {
   // Sort: good first, then bad
   // Sort: GREAT(0)→GOOD(1)→AVG(2)→BAD(3)
   const _so = {great:0,good:1,avg:2,bad:3};
-  entries.sort((a,b) => (_so[a[1].status]??9) - (_so[b[1].status]??9));
+  entries.sort((a,b) => {
+    const as = _so[a[1].status] ?? 9;
+    const bs = _so[b[1].status] ?? 9;
+    if (as !== bs) return as - bs;
+    return effectiveClimateScore(b[1].data||{}) - effectiveClimateScore(a[1].data||{});
+  });
   list.innerHTML = entries.map(([pid, entry]) => {
     const d = entry.data || {};
     const st = entry.status;
@@ -1134,7 +1141,8 @@ function syncRange(el, labelId) {
   const label = document.getElementById(labelId);
   if (id === 'minAcres') label.textContent = v + ' ac+';
   else if (id === 'maxVpa') label.textContent = v >= 20000 ? 'Any' : '$'+v.toLocaleString()+'/ac';
-  else if (id === 'minHScore') label.textContent = v === 0 ? 'Any' : v+'+';
+  else if (id === 'minClimate') label.textContent = v === 0 ? 'Any' : v+'+ /10';
+    else if (id === 'minHScore') label.textContent = v === 0 ? 'Any' : v+'+';
   else if (id === 'minIScore') label.textContent = v === 0 ? 'Any' : v+'+';
   else if (id === 'minVal') label.textContent = v === 0 ? 'Any' : '$'+v.toLocaleString()+'+';
   else if (id === 'maxVal') label.textContent = v >= 5000000 ? 'Any' : '$'+v.toLocaleString();
